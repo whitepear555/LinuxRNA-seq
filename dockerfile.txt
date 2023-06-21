@@ -1,0 +1,89 @@
+FROM  centos:nginx
+MAINTAINER  Group 4
+
+LABEL \
+    description="Image for tools used in RnaSeq"
+
+###############
+#install_conda#
+###############
+
+RUN wget https://mirrors.tuna.tsinghua.edu.cn/anaconda/archive/Anaconda3-2023.03-1-Linux-x86_64.sh \
+    bash Anaconda3-2023.03-1-Linux-x86_64.sh\
+    vim ~/.bashrc\
+    export PATH=/home/.../anaconda3/bin:$PATH  \ 
+    source ~/.bashrc\
+    vim ~/.condarc\
+    '''ssl_verify: true
+    show_channel_urls: true
+    default_channels:
+       - https://mirror.sjtu.edu.cn/anaconda/pkgs/main/
+       - https://mirror.sjtu.edu.cn/anaconda/pkgs/r/
+    custom_channels:
+      conda-forge: https://mirror.sjtu.edu.cn/anaconda/cloud/
+      bioconda: https://mirror.sjtu.edu.cn/anaconda/cloud/
+      pytorch: https://mirror.sjtu.edu.cn/anaconda/cloud/'''
+    conda config --add channels  \ 
+    conda create --name python3 python=3.6\
+    source activate python3 \
+    source deactivate \
+
+#######
+#Tools#
+#######
+
+RUN conda install -c bioconda sra-tools\
+    conda install fastqc \ 
+    conda install trimmomatic\
+    conda install hisat2 \
+    conda install bowtie2\
+    conda install samtools\
+    conda install cufflinks\
+    conda install -y subread\
+    conda install -y stringtie\
+
+################
+#fastqc_v0.11.7#
+################
+
+RUN wget http://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.7.zip \
+    unzip fastqc_v0.11.7.zip\
+    cd FastQC/\
+    chmod 777 fastqc\
+    ./fastqc -h\
+    vim ~/.bashrc\
+    export PATH=/home/root/bio_soft/FastQC/:$PATH \
+    source ~/.bashrc\
+
+################
+#cufflinks2.2.1#
+################
+
+RUN wget http://cole-trapnell-lab.github.io/cufflinks/assets/downloads/cufflinks-2.2.1.Linux_x86_64.tar.gz \
+    tar -xzvf cufflinks-2.2.1.Linux_x86_64.tar.gz\
+    cd cufflinks-2.2.1.Linux_x86_64/\
+    vim ~/.bashrc\
+    export PATH=/home/u883604/bio_soft/cufflinks-2.2.1.Linux_x86_64/:$PATH\
+    source ~/.bashrc\
+
+#######
+#R_4.0#
+#######
+RUN conda create -n linux_r\
+    source activate linux_r\
+    conda install -c conda-forge r-base=4.0\
+    .libPaths()\
+    cd /data/prp43/.conda/envs/linux_r/lib/R/\
+    cd etc\
+    vim Rprofile.site\
+    options("repos" = c(CRAN="https://mirrors.tuna.tsinghua.edu.cn/CRAN/"))\
+    options(BioC_mirror="https://mirrors.tuna.tsinghua.edu.cn/bioconductor")\
+    options()$repos\
+
+#################
+#DESeq2&ballgown#
+#################
+RUN conda install r-xml\
+    conda install -c r r-data.table=1.14.2\
+    conda install -c bioconda bioconductor-deseq2=1.30.0\
+    conda install -c bioconda bioconductor-ballgown \
